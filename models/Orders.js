@@ -5,6 +5,10 @@ const schemaOrders = new Schema({
     type: Date,
     default: Date.now,
   },
+  title: {
+    type:String,
+    required: true,
+  },
   amount: {
     type: Number,
     required: true,

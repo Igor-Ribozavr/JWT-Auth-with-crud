@@ -2,15 +2,13 @@ const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const { db, port } = require('./config/config');
 const cors = require('cors');
-const port = 3000;
 
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(passport.initialize());
-require('./middleware/passport')(passport)
 app.use(morgan('dev'));
 app.use(cors({}));
 
@@ -21,10 +19,12 @@ const crudRouter = require('./routes/crud');
 app.use('/api/register', registerRouter);
 app.use('/api/login', loginRouter);
 app.use('/api/v1/orders/', crudRouter);
+app.use(passport.initialize());
+require('./middleware/passport')(passport);
 
 async function start() {
   try {
-    await mongoose.connect('mongodb://localhost/Users', {
+    await mongoose.connect(db, {
       useNewUrlParser: true,
       useCreateIndex: true,
       useUnifiedTopology: true,

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { secretKey } = require('../config/config');
 const errorHandler = require('../utils/errorHandler')
 
 module.exports.register = async (req, res) => {
@@ -23,7 +24,7 @@ module.exports.register = async (req, res) => {
         {
           userId: createdUser._id,
         },
-        'jwt-key',
+        secretKey,
         { expiresIn: 60 * 60 }
       );
       res.status(200).json({
@@ -46,7 +47,7 @@ module.exports.login = async (req, res) => {
           {
             userId: createdUser._id,
           },
-          'jwt-key',
+          secretKey,
           { expiresIn: 60 * 60 }
         );
         res.status(200).json({
