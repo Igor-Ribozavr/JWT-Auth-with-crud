@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { registerSchema, loginSchema } = require('../utils/validators');
+const { registerSchema, loginSchema } = require('../utils/authValidators');
 const { secretKey } = require('../config/config');
 const errorHandler = require('../utils/errorHandler');
 
@@ -54,6 +54,7 @@ module.exports.login = async (req, res) => {
         res.status(200).json({
           token: `Bearer ${token}`,
         });
+        console.log(token);
       } else {
         res.status(401).json({ error: 'Пароли не совпадают !' });
       }

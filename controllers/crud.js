@@ -1,5 +1,6 @@
 const Orders = require('../models/Orders');
 const errorHandler = require('../utils/errorHandler');
+const { createSchema, updateSchema } = require('../utils/authValidators');
 
 module.exports.getAll = async function (req, res) {
   try {
@@ -25,11 +26,11 @@ module.exports.getOneById = async function (req, res) {
 };
 
 module.exports.create = async function (req, res) {
-  const { title, amount } = req.body;
   try {
+    const result = await createSchema.validateAsync(req.body);
     const order = await Orders.create({
-      title,
-      amount,
+      title: result.title,
+      amount: result.amount,
       user: req.user._id,
     });
     res.status(200).json(order);
@@ -39,11 +40,11 @@ module.exports.create = async function (req, res) {
 };
 
 module.exports.update = async function (req, res) {
-  const { title, amount } = req.body;
   try {
+    const result = await updateSchema.validateAsync(req.body);
     const order = await Orders.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: { title: title, amount: amount } },
+      { $set: { title: result.title, amount: result.amount } },
       {
         new: true,
       }
