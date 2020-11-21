@@ -1,5 +1,5 @@
 module.exports = {
-  secretKey: 'jwt-key',
-  db: 'mongodb://localhost/Users',
-  port: 3000,
+  secretKey: process.env.SECRET_KEY,
+  db: process.env.DATE_BASE,
+  port: process.env.PORT,
 };

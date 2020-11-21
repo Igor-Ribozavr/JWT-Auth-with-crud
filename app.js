@@ -1,10 +1,10 @@
 const express = require('express');
 const morgan = require('morgan');
+const dotenv = require('dotenv').config();
 const mongoose = require('mongoose');
 const passport = require('passport');
 const { db, port } = require('./config/config');
 const cors = require('cors');
-
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
