@@ -1,23 +1,24 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { registerSchema, loginSchema } = require('../utils/validators');
 const { secretKey } = require('../config/config');
-const errorHandler = require('../utils/errorHandler')
+const errorHandler = require('../utils/errorHandler');
 
 module.exports.register = async (req, res) => {
-  const { passport, email, firstName, lastName } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const result = await registerSchema.validateAsync(req.body);
+    const user = await User.findOne({ email: result.email });
     if (user) {
       res.status(409).json({
         error: 'Пользователь с таким Email уже существует !',
       });
     } else {
-      const hash = await bcrypt.hash(passport, 10);
+      const hash = await bcrypt.hash(result.passport, 10);
       const createdUser = await User.create({
-        email,
-        firstName,
-        lastName,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
         passport: hash,
       });
       const token = jwt.sign(
@@ -32,16 +33,16 @@ module.exports.register = async (req, res) => {
       });
     }
   } catch (error) {
-    res.status(500).json({error:'Internal server error'});
+    errorHandler(res, error);
   }
 };
 
 module.exports.login = async (req, res) => {
-  const { passport, email } = req.body;
   try {
-    const createdUser = await User.findOne({ email });
+    const result = await loginSchema.validateAsync(req.body);
+    const createdUser = await User.findOne({ email: result.email });
     if (createdUser) {
-      const isMatch = await bcrypt.compare(passport, createdUser.passport);
+      const isMatch = await bcrypt.compare(result.passport, createdUser.passport);
       if (isMatch === true) {
         const token = jwt.sign(
           {
@@ -59,7 +60,7 @@ module.exports.login = async (req, res) => {
     } else {
       res
         .status(404)
-        .json({ error: 'Пользователz с таким Email не существует !' });
+        .json({ error: 'Пользователь с таким Email не существует !' });
     }
   } catch (error) {
     errorHandler(res, error);

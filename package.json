@@ -12,6 +12,7 @@
   "license": "ISC",
   "proxy": "https://web.postman.co/build/workspace/My-Workspace~c2c09459-8d61-42c9-84ec-ad65ae79dc89/overview",
   "dependencies": {
+    "@hapi/joi": "^17.1.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.17.1",
