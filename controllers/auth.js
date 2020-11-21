@@ -33,7 +33,11 @@ module.exports.register = async (req, res) => {
       });
     }
   } catch (error) {
-    errorHandler(res, error);
+    if (error._original) {
+      res.status(422).json(error);
+    } else {
+      errorHandler(res, error);
+    }
   }
 };
 
@@ -42,7 +46,10 @@ module.exports.login = async (req, res) => {
     const result = await loginSchema.validateAsync(req.body);
     const createdUser = await User.findOne({ email: result.email });
     if (createdUser) {
-      const isMatch = await bcrypt.compare(result.passport, createdUser.passport);
+      const isMatch = await bcrypt.compare(
+        result.passport,
+        createdUser.passport
+      );
       if (isMatch === true) {
         const token = jwt.sign(
           {
@@ -64,6 +71,10 @@ module.exports.login = async (req, res) => {
         .json({ error: 'Пользователь с таким Email не существует !' });
     }
   } catch (error) {
-    errorHandler(res, error);
+    if (error._original) {
+      res.status(422).json(error);
+    } else {
+      errorHandler(res, error);
+    }
   }
 };

@@ -35,7 +35,11 @@ module.exports.create = async function (req, res) {
     });
     res.status(200).json(order);
   } catch (error) {
-    errorHandler(res, error);
+    if (error._original) {
+      res.status(422).json(error);
+    } else {
+      errorHandler(res, error);
+    }
   }
 };
 
@@ -51,7 +55,11 @@ module.exports.update = async function (req, res) {
     );
     res.status(200).json(order);
   } catch (error) {
-    errorHandler(res, error);
+    if (error._original) {
+      res.status(422).json(error);
+    } else {
+      errorHandler(res, error);
+    }
   }
 };
 
