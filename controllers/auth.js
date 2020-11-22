@@ -1,67 +1,49 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Token = require('../models/Token');
 const { registerSchema, loginSchema } = require('../utils/authValidators');
-const { secretKey } = require('../config/config');
+const { tokensGenerator } = require('../utils/tokensGenerator');
 const errorHandler = require('../utils/errorHandler');
 
 module.exports.register = async (req, res) => {
   try {
-    const result = await registerSchema.validateAsync(req.body);
-    const user = await User.findOne({ email: result.email });
+    const {
+      email,
+      firstName,
+      lastName,
+      passport,
+    } = await registerSchema.validateAsync(req.body);
+
+    const user = await User.findOne({ email });
     if (user) {
       res.status(409).json({
         error: 'Пользователь с таким Email уже существует !',
       });
     } else {
-      const hash = await bcrypt.hash(result.passport, 10);
+      const hash = await bcrypt.hash(passport, 10);
       const createdUser = await User.create({
-        email: result.email,
-        firstName: result.firstName,
-        lastName: result.lastName,
+        email,
+        firstName,
+        lastName,
         passport: hash,
       });
-      const token = jwt.sign(
-        {
-          userId: createdUser._id,
-        },
-        secretKey,
-        { expiresIn: 60 * 60 }
-      );
-      res.status(200).json({
-        token: `Bearer ${token}`,
-      });
+      const tokens = tokensGenerator(createdUser._id);
+      res.status(200).json(tokens);
     }
   } catch (error) {
-    if (error._original) {
-      res.status(422).json(error);
-    } else {
-      errorHandler(res, error);
-    }
+    error._original ? res.status(422).json(error) : errorHandler(res, error);
   }
 };
 
 module.exports.login = async (req, res) => {
   try {
-    const result = await loginSchema.validateAsync(req.body);
-    const createdUser = await User.findOne({ email: result.email });
+    const { email, passport } = await loginSchema.validateAsync(req.body);
+    const createdUser = await User.findOne({ email });
     if (createdUser) {
-      const isMatch = await bcrypt.compare(
-        result.passport,
-        createdUser.passport
-      );
+      const isMatch = await bcrypt.compare(passport, createdUser.passport);
       if (isMatch === true) {
-        const token = jwt.sign(
-          {
-            userId: createdUser._id,
-          },
-          secretKey,
-          { expiresIn: 60 * 60 }
-        );
-        res.status(200).json({
-          token: `Bearer ${token}`,
-        });
-        console.log(token);
+        const tokens = tokensGenerator(createdUser._id);
+        res.status(200).json(tokens);
       } else {
         res.status(401).json({ error: 'Пароли не совпадают !' });
       }
@@ -71,10 +53,44 @@ module.exports.login = async (req, res) => {
         .json({ error: 'Пользователь с таким Email не существует !' });
     }
   } catch (error) {
-    if (error._original) {
-      res.status(422).json(error);
+    error._original ? res.status(422).json(error) : errorHandler(res, error);
+  }
+};
+
+module.exports.refreshToken = async (req, res) => {
+  try {
+    const tokens = tokensGenerator(req.user);
+    const newRefreshToken = await Token.findOneAndUpdate(
+      { userId: req.user },
+      { $set: { refreshToken: tokens.refreshToken } },
+      {
+        new: true,
+      }
+    );
+    if (newRefreshToken) {
+      res.status(200).json(tokens);
     } else {
-      errorHandler(res, error);
+      await Token.create({
+        userId: req.user,
+        refreshToken: tokens.refreshToken,
+      });
+      res.status(200).json(tokens);
     }
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+module.exports.logout = async (req, res) => {
+  try {
+    await Token.findOneAndUpdate(
+      { userId: req.user },
+      { $set: { refreshToken: '' } },
+      {
+        new: true,
+      }
+    );
+    res.status(200).json({ status: 'You are logout !' });
+  } catch (error) {
+    errorHandler(res, error);
   }
 };

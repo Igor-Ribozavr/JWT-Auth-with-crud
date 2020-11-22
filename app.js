@@ -2,7 +2,6 @@ const express = require('express');
 const morgan = require('morgan');
 const dotenv = require('dotenv').config();
 const mongoose = require('mongoose');
-const passport = require('passport');
 const { db, port } = require('./config/config');
 const cors = require('cors');
 const app = express();
@@ -14,13 +13,16 @@ app.use(cors({}));
 
 const registerRouter = require('./routes/register');
 const loginRouter = require('./routes/login');
+const refreshRouter = require('./routes/refreshToken');
+const logoutRouter = require('./routes/logout');
 const crudRouter = require('./routes/crud');
 
-app.use('/api/register', registerRouter);
-app.use('/api/login', loginRouter);
-app.use('/api/v1/orders/', crudRouter);
-app.use(passport.initialize());
-require('./middleware/passport')(passport);
+app.use('/api/auth/register', registerRouter);
+app.use('/api/auth/login', loginRouter);
+app.use('/api/auth/refresh-token', refreshRouter);
+app.use('/api/auth/logout', logoutRouter);
+app.use('/api/v1/orders', crudRouter);
+
 
 async function start() {
   try {

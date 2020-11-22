@@ -1,11 +1,11 @@
 const Orders = require('../models/Orders');
 const errorHandler = require('../utils/errorHandler');
-const { createSchema, updateSchema } = require('../utils/authValidators');
+const { createSchema, updateSchema } = require('../utils/crudValidators');
 
 module.exports.getAll = async function (req, res) {
   try {
     const orders = await Orders.find({
-      user: req.user._id,
+      user: req.user,
     });
     res.status(200).json(orders);
   } catch (error) {
@@ -17,7 +17,7 @@ module.exports.getOneById = async function (req, res) {
   try {
     const order = await Orders.findOne({
       _id: req.params.id,
-      user: req.user._id,
+      user: req.user,
     });
     res.status(200).json(order);
   } catch (error) {
@@ -27,39 +27,31 @@ module.exports.getOneById = async function (req, res) {
 
 module.exports.create = async function (req, res) {
   try {
-    const result = await createSchema.validateAsync(req.body);
+    const { title, amount } = await createSchema.validateAsync(req.body);
     const order = await Orders.create({
-      title: result.title,
-      amount: result.amount,
-      user: req.user._id,
+      title,
+      amount,
+      user: req.user,
     });
     res.status(200).json(order);
   } catch (error) {
-    if (error._original) {
-      res.status(422).json(error);
-    } else {
-      errorHandler(res, error);
-    }
+    error._original ? res.status(422).json(error) : errorHandler(res, error);
   }
 };
 
 module.exports.update = async function (req, res) {
   try {
-    const result = await updateSchema.validateAsync(req.body);
+    const { title, amount } = await updateSchema.validateAsync(req.body);
     const order = await Orders.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: { title: result.title, amount: result.amount } },
+      { $set: { title, amount } },
       {
         new: true,
       }
     );
     res.status(200).json(order);
   } catch (error) {
-    if (error._original) {
-      res.status(422).json(error);
-    } else {
-      errorHandler(res, error);
-    }
+    error._original ? res.status(422).json(error) : errorHandler(res, error);
   }
 };
 
